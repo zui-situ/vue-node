@@ -1,7 +1,35 @@
 import axios from 'axios';
-
+import Vue from 'vue';
+import router from './router'
 const http = axios.create({
-    baseUrl: 'http://localhost:3000/admin/api'
+    baseURL:process.env.VUE_APP_API_URL || '/admin/api'
 })
+
+http.interceptors.request.use((config)=>{
+    if(localStorage.token){
+        config.headers.Authorization = 'Bearer ' + localStorage.token;
+    }
+    return config;
+},(error)=>{
+    return Promise.reject(error);
+})
+
+http.interceptors.response.use(res=>{
+    return res
+},err=>{
+    if(err.response.data.message){
+        Vue.prototype.$message({
+            type:'error',
+            message:err.response.data.message
+        })
+        console.log(err.response);
+        if(err.response.status === 401){
+            router.push('/login');
+            console.log('login')
+        }
+    }
+    return Promise.reject(err);
+})
+
 
 export default http;
